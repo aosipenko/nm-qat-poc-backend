@@ -1,9 +1,12 @@
 package com.refinitiv.rest.service;
 
-import org.springframework.stereotype.Component;
+import java.util.List;
 
 public interface KafkaService {
 
     String testRequest();
+
+    void storeData(String data);
+    List<String> retrieveData();
 
 }
