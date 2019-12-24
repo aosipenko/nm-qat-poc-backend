@@ -7,6 +7,7 @@ import com.refinitiv.rest.service.entity.Client;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -28,31 +29,6 @@ public class KafkaController extends QATAbstractController {
     public DBService dbService;
 
     @GET
-    @Path("/test")
-    @Produces(MediaType.TEXT_PLAIN)
-    public String getMirror(
-        @QueryParam("mirror")
-            String mirror) {
-        return kafkaService.testRequest() + mirror;
-    }
-
-    @POST
-    @Path("/post")
-    @Produces(MediaType.TEXT_PLAIN)
-    public void putValue(
-        @QueryParam("value")
-            String mirror) {
-        kafkaService.storeData(mirror);
-    }
-
-    @GET
-    @Path("/retrieve")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response retrieveValues() {
-        return constructOKResponse(kafkaService.retrieveData());
-    }
-
-    @GET
     @Path("/client")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getUser(
@@ -65,15 +41,31 @@ public class KafkaController extends QATAbstractController {
     @Path("/client/create")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response createUser(String client) {
-        return constructOKResponse(dbService.createClient(gson.fromJson(client, Client.class)));
+        try {
+            return constructOKResponse(dbService.createClient(gson.fromJson(client, Client.class)));
+        } catch (Exception e) {
+            return constructClientErrorResponse();
+        }
     }
 
-    @GET
-    @Path("/test/{pathParam}")
-    @Produces(MediaType.TEXT_PLAIN)
-    public String getPathParam(
-        @PathParam("pathParam")
-            String mirror) {
-        return mirror;
+    @POST
+    @Path("/client/{id}/update")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response updateUser(
+        @PathParam("id")
+            Long id, String clientData) {
+        try {
+            return constructOKResponse(dbService.updateClient(id, gson.fromJson(clientData, Client.class)));
+        } catch (Exception e) {
+            return constructClientErrorResponse();
+        }
+    }
+
+    @DELETE
+    @Path("/client/{id}/delete")
+    public Response deleteUser(
+        @PathParam("id")
+            Long id) {
+        return constructOKResponse(dbService.deleteClient(id));
     }
 }

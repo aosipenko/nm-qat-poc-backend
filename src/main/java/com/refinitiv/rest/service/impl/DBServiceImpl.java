@@ -14,6 +14,9 @@ import org.springframework.web.context.support.SpringBeanAutowiringSupport;
 @Component
 public class DBServiceImpl extends SpringBeanAutowiringSupport implements DBService {
 
+    private final static String MAIL_REGEXP =
+        "^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$";
+
     private final AddressesDAO addressesDAO;
 
     private final ClientsDAO clientsDAO;
@@ -41,7 +44,10 @@ public class DBServiceImpl extends SpringBeanAutowiringSupport implements DBServ
     }
 
     @Override
-    public Long createClient(Client input) {
+    public Long createClient(Client input) throws Exception {
+        if (!validateData(input)) {
+            throw new Exception("Client data is incorrect!");
+        }
         Clients client = new Clients();
         client.setFName(input.getFName());
         client.setLName(input.getLName());
@@ -65,6 +71,73 @@ public class DBServiceImpl extends SpringBeanAutowiringSupport implements DBServ
         clientsDAO.saveAndFlush(client);
 
         return client.getId();
+    }
+
+    @Override
+    public Long updateClient(Long id, Client client) throws Exception {
+        if (!validateData(client)) {
+            throw new Exception("Client data is incorrect!");
+        }
+        if (clientsDAO.findById(id).isPresent()) {
+            try {
+                Clients dbENtry = clientsDAO.findById(id).get();
+                Contacts contacts = contactsDAO.findById(dbENtry.getContactId()).get();
+                Addresses addresses = addressesDAO.findById(dbENtry.getAddressId()).get();
+
+                dbENtry.setLName(client.getLName() == null ? dbENtry.getLName() : client.getLName());
+                dbENtry.setFName(client.getFName() == null ? dbENtry.getFName() : client.getFName());
+                contacts.setEmail(client.getEmail() == null ? contacts.getEmail() : client.getEmail());
+                contacts.setPhone(client.getPhone() == null ? contacts.getPhone() : client.getPhone());
+                addresses.setStreet(client.getStreet() == null ? addresses.getStreet() : client.getStreet());
+                addresses.setRegion(client.getRegion() == null ? addresses.getRegion() : client.getRegion());
+                addresses.setCountry(client.getCountry() == null ? addresses.getCountry() : client.getCountry());
+                addresses.setCity(client.getCity() == null ? addresses.getCity() : client.getCity());
+
+                contactsDAO.save(contacts);
+                addressesDAO.save(addresses);
+                clientsDAO.save(dbENtry);
+                return dbENtry.getId();
+            } catch (Exception e) {
+                e.printStackTrace();
+                return -1L;
+            }
+        } else {
+            return -1L;
+        }
+    }
+
+    @Override
+    public Long deleteClient(Long id) {
+        if (clientsDAO.findById(id).isPresent()) {
+            try {
+                Clients dbENtry = clientsDAO.findById(id).get();
+                Contacts contacts = contactsDAO.findById(dbENtry.getContactId()).get();
+                Addresses addresses = addressesDAO.findById(dbENtry.getAddressId()).get();
+
+                contactsDAO.delete(contacts);
+                addressesDAO.delete(addresses);
+                clientsDAO.delete(dbENtry);
+                return id;
+            } catch (Exception e) {
+                e.printStackTrace();
+                return -1L;
+            }
+        } else {
+            return -1L;
+        }
+    }
+
+    private boolean validateData(Client client) {
+        if (client.getCountry().length() > 3) {
+            return false;
+        }
+        if (client.getPhone().length() > 12) {
+            return false;
+        }
+        if (!client.getEmail().matches(MAIL_REGEXP)) {
+            return false;
+        }
+        return true;
     }
 
     private Client getDefaultClient() {

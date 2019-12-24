@@ -11,4 +11,10 @@ public abstract class QATAbstractController extends SpringBeanAutowiringSupport 
                 .header("Access-Control-Allow-Origin", "*")
                 .build();
     }
+
+    protected Response constructClientErrorResponse(){
+        return Response.status(Response.Status.BAD_REQUEST)
+                       .header("Access-Control-Allow-Origin", "*")
+                       .build();
+    }
 }
