@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.refinitiv.rest.service.DBService;
 import com.refinitiv.rest.service.KafkaService;
 import com.refinitiv.rest.service.entity.Client;
+import com.refinitiv.rest.service.exception.BadClientDataException;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.ws.rs.Consumes;
@@ -37,13 +38,28 @@ public class KafkaController extends QATAbstractController {
         return constructOKResponse(dbService.getClientById(id));
     }
 
+    @GET
+    @Path("/client/all")
+    public Response getClientsList() {
+        return constructOKResponse(dbService.getAllClients());
+    }
+
+    @GET
+    @Path("/client/{id}/contractors")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getContractorsForClient(
+        @PathParam("id")
+            Long id) {
+        return constructOKResponse(dbService.getContractorsForClient(id));
+    }
+
     @POST
     @Path("/client/create")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response createUser(String client) {
+    public Response createUser(String client) throws Exception {
         try {
             return constructOKResponse(dbService.createClient(gson.fromJson(client, Client.class)));
-        } catch (Exception e) {
+        } catch (BadClientDataException e) {
             return constructClientErrorResponse();
         }
     }
@@ -53,10 +69,10 @@ public class KafkaController extends QATAbstractController {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updateUser(
         @PathParam("id")
-            Long id, String clientData) {
+            Long id, String clientData) throws Exception {
         try {
             return constructOKResponse(dbService.updateClient(id, gson.fromJson(clientData, Client.class)));
-        } catch (Exception e) {
+        } catch (BadClientDataException e) {
             return constructClientErrorResponse();
         }
     }

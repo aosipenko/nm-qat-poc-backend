@@ -1,6 +1,9 @@
 package com.refinitiv.rest.service;
 
+import com.refinitiv.db.Contractors;
 import com.refinitiv.rest.service.entity.Client;
+
+import java.util.List;
 
 public interface DBService {
 
@@ -11,4 +14,10 @@ public interface DBService {
     Long updateClient(Long id, Client client) throws Exception;
 
     Long deleteClient(Long id);
+
+    List<Client> getAllClients();
+
+    public List<Contractors> getRegionContractors(Long regionId);
+
+    public List<Contractors> getContractorsForClient(Long clientId);
 }
