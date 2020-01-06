@@ -11,6 +11,7 @@ import com.refinitiv.db.dao.ContractorsDAO;
 import com.refinitiv.rest.service.DBService;
 import com.refinitiv.rest.service.entity.Client;
 import com.refinitiv.rest.service.exception.BadClientDataException;
+import com.refinitiv.rest.service.exception.NoSuchClientException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.support.SpringBeanAutowiringSupport;
 
@@ -44,10 +45,10 @@ public class DBServiceImpl extends SpringBeanAutowiringSupport implements DBServ
     }
 
     @Override
-    public Client getClientById(Long id) {
+    public Client getClientById(Long id) throws NoSuchClientException {
         Clients client = clientsDAO.findById(id).orElse(null);
         if (client == null) {
-            return getDefaultClient();
+            throw new NoSuchClientException();
         }
         Addresses addresses = addressesDAO.findById(client.getAddressId()).orElse(new Addresses(0L, 0L, "", "", ""));
         Contacts contacts = contactsDAO.findById(client.getContactId()).orElse(new Contacts(0L, "", ""));
@@ -114,7 +115,7 @@ public class DBServiceImpl extends SpringBeanAutowiringSupport implements DBServ
                 return -1L;
             }
         } else {
-            return -1L;
+            throw new NoSuchClientException();
         }
     }
 
@@ -141,7 +142,14 @@ public class DBServiceImpl extends SpringBeanAutowiringSupport implements DBServ
 
     @Override
     public List<Client> getAllClients() {
-        return clientsDAO.findAll().stream().map(clients -> getClientById(clients.getId()))
+        return clientsDAO.findAll().stream().map(clients -> {
+            try {
+                return getClientById(clients.getId());
+            } catch (NoSuchClientException e) {
+                e.printStackTrace();
+            }
+            return null;
+        })
                          .collect(Collectors.toList());
     }
 
@@ -153,7 +161,7 @@ public class DBServiceImpl extends SpringBeanAutowiringSupport implements DBServ
     }
 
     @Override
-    public List<Contractors> getContractorsForClient(Long clientId) {
+    public List<Contractors> getContractorsForClient(Long clientId) throws NoSuchClientException {
         return getRegionContractors(getClientById(clientId).getRegion());
     }
 
@@ -174,10 +182,5 @@ public class DBServiceImpl extends SpringBeanAutowiringSupport implements DBServ
         return Client.builder().id(client.getId()).street(address.getStreet()).city(address.getCity())
                      .country(address.getCountry()).phone(contact.getPhone()).email(contact.getEmail())
                      .fName(client.getFName()).lName(client.getLName()).region(address.getRegion()).build();
-    }
-
-    private Client getDefaultClient() {
-        return Client.builder().id(-1L).city("Austin").country("USA").email("john.doe@undefined.com").fName("John")
-                     .lName("Doe").phone("+3809811111111").region(0L).street("Elm Street").build();
     }
 }

@@ -5,6 +5,7 @@ import com.refinitiv.rest.service.DBService;
 import com.refinitiv.rest.service.KafkaService;
 import com.refinitiv.rest.service.entity.Client;
 import com.refinitiv.rest.service.exception.BadClientDataException;
+import com.refinitiv.rest.service.exception.NoSuchClientException;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.ws.rs.Consumes;
@@ -35,7 +36,11 @@ public class KafkaController extends QATAbstractController {
     public Response getUser(
         @QueryParam("id")
             long id) {
-        return constructOKResponse(dbService.getClientById(id));
+        try {
+            return constructOKResponse(dbService.getClientById(id));
+        } catch (NoSuchClientException e) {
+            return constructClientNotFoundResponse();
+        }
     }
 
     @GET
@@ -50,7 +55,11 @@ public class KafkaController extends QATAbstractController {
     public Response getContractorsForClient(
         @PathParam("id")
             Long id) {
-        return constructOKResponse(dbService.getContractorsForClient(id));
+        try {
+            return constructOKResponse(dbService.getContractorsForClient(id));
+        } catch (NoSuchClientException e) {
+            return constructClientNotFoundResponse();
+        }
     }
 
     @POST
@@ -72,6 +81,8 @@ public class KafkaController extends QATAbstractController {
             Long id, String clientData) throws Exception {
         try {
             return constructOKResponse(dbService.updateClient(id, gson.fromJson(clientData, Client.class)));
+        } catch (NoSuchClientException n) {
+            return constructClientNotFoundResponse();
         } catch (BadClientDataException e) {
             return constructClientErrorResponse();
         }
