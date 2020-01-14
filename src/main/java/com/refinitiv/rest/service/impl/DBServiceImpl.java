@@ -8,8 +8,11 @@ import com.refinitiv.db.dao.AddressesDAO;
 import com.refinitiv.db.dao.ClientsDAO;
 import com.refinitiv.db.dao.ContactsDAO;
 import com.refinitiv.db.dao.ContractorsDAO;
+import com.refinitiv.db.dao.GoodsDAO;
+import com.refinitiv.db.dao.OrdersDAO;
 import com.refinitiv.rest.service.DBService;
 import com.refinitiv.rest.service.entity.Client;
+import com.refinitiv.rest.service.entity.Item;
 import com.refinitiv.rest.service.exception.BadClientDataException;
 import com.refinitiv.rest.service.exception.NoSuchClientException;
 import org.springframework.stereotype.Component;
@@ -36,12 +39,18 @@ public class DBServiceImpl extends SpringBeanAutowiringSupport implements DBServ
 
     private final ContractorsDAO contractorsDAO;
 
+    private final GoodsDAO goodsDAO;
+
+    private final OrdersDAO ordersDAO;
+
     public DBServiceImpl(AddressesDAO dao, ClientsDAO clientsDAO, ContactsDAO contactsDAO,
-                         ContractorsDAO contractorsDAO) {
+                         ContractorsDAO contractorsDAO, GoodsDAO goodsDAO, OrdersDAO ordersDAO) {
         addressesDAO = dao;
         this.clientsDAO = clientsDAO;
         this.contactsDAO = contactsDAO;
         this.contractorsDAO = contractorsDAO;
+        this.goodsDAO = goodsDAO;
+        this.ordersDAO = ordersDAO;
     }
 
     @Override
@@ -149,8 +158,7 @@ public class DBServiceImpl extends SpringBeanAutowiringSupport implements DBServ
                 e.printStackTrace();
             }
             return null;
-        })
-                         .collect(Collectors.toList());
+        }).collect(Collectors.toList());
     }
 
     @Override
@@ -163,6 +171,20 @@ public class DBServiceImpl extends SpringBeanAutowiringSupport implements DBServ
     @Override
     public List<Contractors> getContractorsForClient(Long clientId) throws NoSuchClientException {
         return getRegionContractors(getClientById(clientId).getRegion());
+    }
+
+    @Override
+    public List<Item> getAllItems() {
+        return goodsDAO.findAll().stream().map(
+            goods -> Item.builder().amount(1).id(goods.getId()).name(goods.getName()).url(goods.getUrl())
+                         .price(goods.getPrice()).build()).collect(Collectors.toList());
+    }
+
+    @Override
+    public Item getItemById(long id) {
+        return goodsDAO.findById(id).map(
+            goods -> Item.builder().price(goods.getPrice()).name(goods.getName()).url(goods.getUrl()).build())
+                       .orElse(null);
     }
 
     private boolean validateData(Client client) {

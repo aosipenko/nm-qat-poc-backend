@@ -31,6 +31,22 @@ public class KafkaController extends QATAbstractController {
     public DBService dbService;
 
     @GET
+    @Path("/items")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getAllItems() {
+        return constructOKResponse(dbService.getAllItems());
+    }
+
+    @GET
+    @Path("/item/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getItemById(
+        @PathParam("id")
+            Long id) {
+        return constructOKResponse(dbService.getItemById(id));
+    }
+
+    @GET
     @Path("/client")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getUser(

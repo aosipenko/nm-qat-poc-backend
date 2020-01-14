@@ -11,8 +11,8 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
-@Entity(name = "CONTRACTOR")
-@Table(name = "CONTRACTOR")
+@Entity(name = "GOODS")
+@Table(name = "GOODS")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
